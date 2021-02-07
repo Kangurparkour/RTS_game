@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class CameraController : MonoBehaviour
 {
@@ -30,10 +31,18 @@ public class CameraController : MonoBehaviour
     public float screenEdgeBorder;
     public float screescreenEdgeMovementSpeed;
 
+    RectTransform selectionBox;
+    Rect selectionRect;
+    Rect boxRect;
+
+    Vector2 mousePos;
+
 
     void Start()
     {
+        selectionBox = GetComponentInChildren<Image>(true).transform as RectTransform;
         cameraTransform = transform;
+        selectionBox.gameObject.SetActive(false);
     }
 
 
@@ -42,10 +51,13 @@ public class CameraController : MonoBehaviour
         Controller();
         CameraRotation();
         LimitMap();
+        SelecionBoxUpdate();
     }
 
     private void Controller()
     {
+        mousePos = Input.mousePosition;
+
         // Keyboard move
 
         Vector3 keyboard_move = new Vector3(Input.GetAxis("Horizontal"), 0f, Input.GetAxis("Vertical"));
@@ -78,8 +90,8 @@ public class CameraController : MonoBehaviour
         Rect upRect = new Rect(0, Screen.height - screenEdgeBorder, Screen.width, screenEdgeBorder);
         Rect downRect = new Rect(0, 0, Screen.width, screenEdgeBorder);
 
-        edge_move.x = leftRect.Contains(Input.mousePosition) ? -1 : rightRect.Contains(Input.mousePosition) ? 1 : 0;
-        edge_move.z = upRect.Contains(Input.mousePosition) ? 1 : downRect.Contains(Input.mousePosition) ? -1 : 0;
+        edge_move.x = leftRect.Contains(mousePos) ? -1 : rightRect.Contains(mousePos) ? 1 : 0;
+        edge_move.z = upRect.Contains(mousePos) ? 1 : downRect.Contains(mousePos) ? -1 : 0;
 
         edge_move = Quaternion.Euler(new Vector3(0f,transform.eulerAngles.y,0f)) * edge_move * screescreenEdgeMovementSpeed * Time.deltaTime;
         edge_move = cameraTransform.InverseTransformDirection(edge_move);
@@ -121,6 +133,42 @@ public class CameraController : MonoBehaviour
         
         
         return 0;
+    }
+
+    private void SelecionBoxUpdate()
+    {
+        if(Input.GetMouseButtonDown(0))
+        {
+            selectionBox.gameObject.SetActive(true);
+            selectionRect.position = mousePos;
+        }
+        else if(Input.GetMouseButtonUp(0))
+        {
+            selectionBox.gameObject.SetActive(false);
+        }
+        if(Input.GetMouseButton(0))
+        {
+            selectionRect.size = mousePos - selectionRect.position;
+            boxRect = AbsRect(selectionRect);
+            selectionBox.anchoredPosition = boxRect.position;
+            selectionBox.sizeDelta = boxRect.size;
+        }
+    }
+
+    private Rect AbsRect(Rect rect)
+    {
+        if (rect.width < 0)
+        {
+            rect.x += rect.width;
+            rect.width *= -1;
+        }
+        if(rect.height < 0)
+        {
+            rect.y += rect.height;
+            rect.height *= -1;
+        }
+
+        return rect;
     }
 
 }
