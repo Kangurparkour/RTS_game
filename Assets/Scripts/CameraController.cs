@@ -8,6 +8,7 @@ public class CameraController : MonoBehaviour
     Transform cameraTransform;
     public LayerMask groundMask = -1;
 
+    List<Unit> selectedUnits = new List<Unit>();
 
     [SerializeField] float speed = 5f;
     [SerializeField] float rotateSpeed = 1f;
@@ -78,7 +79,7 @@ public class CameraController : MonoBehaviour
         if (distanceToGround != targetHight)
             diff = targetHight - distanceToGround;
 
-        cameraTransform.position = Vector3.Lerp(cameraTransform.position, new Vector3(cameraTransform.position.x, targetHight + diff, cameraTransform.position.z),Time.deltaTime*heightDampening);
+        cameraTransform.position = Vector3.Lerp(cameraTransform.position, new Vector3(cameraTransform.position.x, targetHight + diff, cameraTransform.position.z), Time.deltaTime * heightDampening);
 
 
         // Edge move
@@ -93,10 +94,10 @@ public class CameraController : MonoBehaviour
         edge_move.x = leftRect.Contains(mousePos) ? -1 : rightRect.Contains(mousePos) ? 1 : 0;
         edge_move.z = upRect.Contains(mousePos) ? 1 : downRect.Contains(mousePos) ? -1 : 0;
 
-        edge_move = Quaternion.Euler(new Vector3(0f,transform.eulerAngles.y,0f)) * edge_move * screescreenEdgeMovementSpeed * Time.deltaTime;
+        edge_move = Quaternion.Euler(new Vector3(0f, transform.eulerAngles.y, 0f)) * edge_move * screescreenEdgeMovementSpeed * Time.deltaTime;
         edge_move = cameraTransform.InverseTransformDirection(edge_move);
 
-        cameraTransform.Translate(edge_move,Space.Self);
+        cameraTransform.Translate(edge_move, Space.Self);
     }
 
 
@@ -125,33 +126,34 @@ public class CameraController : MonoBehaviour
         Ray ray = new Ray(cameraTransform.position, Vector3.down);
         RaycastHit hit;
 
-        if(Physics.Raycast(ray,out hit,groundMask.value))
+        if (Physics.Raycast(ray, out hit, groundMask.value))
         {
             Debug.Log(hit.point.magnitude.ToString());
             return (hit.point - cameraTransform.position).magnitude;
         }
-        
-        
+
+
         return 0;
     }
 
     private void SelecionBoxUpdate()
     {
-        if(Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0))
         {
             selectionBox.gameObject.SetActive(true);
             selectionRect.position = mousePos;
         }
-        else if(Input.GetMouseButtonUp(0))
+        else if (Input.GetMouseButtonUp(0))
         {
             selectionBox.gameObject.SetActive(false);
         }
-        if(Input.GetMouseButton(0))
+        if (Input.GetMouseButton(0))
         {
             selectionRect.size = mousePos - selectionRect.position;
             boxRect = AbsRect(selectionRect);
             selectionBox.anchoredPosition = boxRect.position;
             selectionBox.sizeDelta = boxRect.size;
+            UpdateSelcetedUnits();
         }
     }
 
@@ -162,7 +164,7 @@ public class CameraController : MonoBehaviour
             rect.x += rect.width;
             rect.width *= -1;
         }
-        if(rect.height < 0)
+        if (rect.height < 0)
         {
             rect.y += rect.height;
             rect.height *= -1;
@@ -170,5 +172,39 @@ public class CameraController : MonoBehaviour
 
         return rect;
     }
+
+    private void UpdateSelcetedUnits()
+    {
+        foreach (Unit unit in Unit.SelectableUnits)
+        {
+            if (!unit)
+                continue;
+
+            var pos = unit.transform.position;
+            var posInScreen = Camera.main.WorldToScreenPoint(pos);
+            bool inRect = isInRect(boxRect, posInScreen);
+            (unit as ISelectable).SetSelected(inRect);
+
+            if (inRect)
+            {
+                selectedUnits.Add(unit);
+            }
+        }
+    }
+
+    private bool isInRect(Rect rect, Vector2 point)
+    {
+        return point.x >= rect.position.x && point.x <= (rect.position.x + rect.size.x)
+            && point.y >= rect.position.y && point.y <= (rect.position.y + rect.size.y);
+    }
+
+
+    
+
+    private void GiveCommand()
+    {
+
+    }
+
 
 }
