@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Enemis : Unit
+public class Enemy : Unit
 {
-   
+  
 }

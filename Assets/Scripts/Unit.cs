@@ -5,13 +5,14 @@ using UnityEngine.AI;
 
 public class Unit : MonoBehaviour
 {
-    public Transform target;
 
+    protected enum Task { idle, move, chase, attack }
     public static List<ISelectable> SelectableUnits { get { return selectableUnits; } }
     static List<ISelectable> selectableUnits = new List<ISelectable>();
 
     protected Animator animator;
-    [SerializeField] protected NavMeshAgent agent;
+    protected NavMeshAgent agent;
+    protected Task task = Task.idle;
 
     [SerializeField] float MaxHp = 80;
     [SerializeField] float actualHp;
@@ -22,6 +23,7 @@ public class Unit : MonoBehaviour
     {
         get { return actualHp / MaxHp; }
     }
+    public bool IsAlive { get { return actualHp > 0; } }
 
     void Start()
     {
@@ -29,7 +31,7 @@ public class Unit : MonoBehaviour
         animator = GetComponent<Animator>();
         agent = GetComponent<NavMeshAgent>();
         healthBar = Instantiate(hpSliderPrefab, transform).GetComponent<HealthBar>();
-       
+
         if (this is ISelectable)
         {
             selectableUnits.Add(this as ISelectable);
@@ -46,18 +48,40 @@ public class Unit : MonoBehaviour
 
     void Update()
     {
-
-        if (target != null)
+        if (IsAlive)
         {
-            agent.SetDestination(target.position);
+            switch (task)
+            {
+                case Task.idle: Idling(); break;
+                case Task.move: Moveing(); break;
+                case Task.chase: chasing();  break;
+                case Task.attack: Attacking();  break;
+            }
         }
-        else
-            Debug.Log("Na razie nie ma celu !");
-
 
         Animate();
     }
 
+    protected virtual void Idling() 
+    {
+        agent.velocity = Vector3.zero;
+    }
+    protected virtual void Attacking() 
+    {
+        agent.velocity = Vector3.zero;
+    }
+    protected virtual void Moveing() 
+    {
+        var distanceToDestination = Vector3.Distance(agent.destination,transform.position);
+        if(distanceToDestination <= agent.stoppingDistance)
+        {
+            task = Task.idle;
+        }
+    }
+    protected virtual void chasing() 
+    {
+
+    }
     protected virtual void Animate()
     {
         var speedVecor = agent.velocity;

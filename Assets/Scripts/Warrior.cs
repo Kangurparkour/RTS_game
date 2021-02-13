@@ -8,4 +8,16 @@ public class Warrior : Unit, ISelectable
     {
         healthBar.gameObject.SetActive(isSelected);
     }
+
+    private void GetCommand(Vector3 destination)
+    {
+        agent.SetDestination(destination);
+        task = Task.move;
+
+    }
+    private void GetCommand(Enemy enemy)
+    {
+        //todo
+    }
+
 }

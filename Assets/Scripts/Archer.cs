@@ -18,4 +18,16 @@ public class Archer : Unit, ISelectable
 
     }
 
+
+    private void GetCommand(Vector3 destination)
+    {
+        agent.SetDestination(destination);
+        task = Task.move;
+      
+    }
+    private void GetCommand(Enemy enemy)
+    {
+        //todo
+    }
+
 }

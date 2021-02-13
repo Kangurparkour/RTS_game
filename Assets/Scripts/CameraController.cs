@@ -37,7 +37,8 @@ public class CameraController : MonoBehaviour
     Rect boxRect;
 
     Vector2 mousePos;
-
+    Vector2 ScreenPos;
+    [SerializeField] LayerMask commandLayerMask = -1;
 
     void Start()
     {
@@ -58,7 +59,7 @@ public class CameraController : MonoBehaviour
     private void Controller()
     {
         mousePos = Input.mousePosition;
-
+        ScreenPos = Camera.main.ScreenToViewportPoint(mousePos);
         // Keyboard move
 
         Vector3 keyboard_move = new Vector3(Input.GetAxis("Horizontal"), 0f, Input.GetAxis("Vertical"));
@@ -154,6 +155,12 @@ public class CameraController : MonoBehaviour
             selectionBox.anchoredPosition = boxRect.position;
             selectionBox.sizeDelta = boxRect.size;
             UpdateSelcetedUnits();
+
+        }
+
+        if (Input.GetMouseButtonDown(1))
+        {
+            GiveCommand();
         }
     }
 
@@ -175,6 +182,7 @@ public class CameraController : MonoBehaviour
 
     private void UpdateSelcetedUnits()
     {
+        selectedUnits.Clear();
         foreach (Unit unit in Unit.SelectableUnits)
         {
             if (!unit)
@@ -183,12 +191,14 @@ public class CameraController : MonoBehaviour
             var pos = unit.transform.position;
             var posInScreen = Camera.main.WorldToScreenPoint(pos);
             bool inRect = isInRect(boxRect, posInScreen);
-            (unit as ISelectable).SetSelected(inRect);
+            (unit as ISelectable).SetSelected(inRect || IsMouseOnUnits(unit));
 
-            if (inRect)
+            if (inRect || IsMouseOnUnits(unit))
             {
                 selectedUnits.Add(unit);
             }
+
+
         }
     }
 
@@ -199,12 +209,54 @@ public class CameraController : MonoBehaviour
     }
 
 
-    
+
+
 
     private void GiveCommand()
     {
+        Ray ray = Camera.main.ViewportPointToRay(ScreenPos);
+        RaycastHit hit;
 
+
+        if (Physics.Raycast(ray, out hit, 100000, commandLayerMask))
+        {
+            object commandData = null;
+            if (hit.collider is TerrainCollider)
+            {
+                commandData = hit.point;
+            }
+            else
+            {
+                commandData = hit.collider.gameObject.GetComponent<Unit>();
+            }
+
+            GiveCommand(commandData);
+        }
     }
 
+    private void GiveCommand(object command)
+    {
+        foreach (Unit unit in selectedUnits)
+            unit.SendMessage("GetCommand", command, SendMessageOptions.DontRequireReceiver);
+    }
+    private bool IsMouseOnUnits(Unit unit)
+    {
+        Ray ray = Camera.main.ViewportPointToRay(ScreenPos);
+        RaycastHit hit;
+        if (Physics.Raycast(ray, out hit, Mathf.Infinity, commandLayerMask))
+        {
+            
 
+            if (hit.collider.gameObject.tag == "Soldiers")
+            {
+              // Unit u = hit.collider.gameObject.GetComponent<Unit>();
+
+                if(hit.collider.gameObject.GetComponent<Unit>() == unit)
+                return true;
+            }
+
+        }
+        return false;
+
+    }
 }
