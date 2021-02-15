@@ -7,7 +7,8 @@ public class CameraController : MonoBehaviour
 {
     Transform cameraTransform;
     public LayerMask groundMask = -1;
-
+    public GameObject destiantionPoint;
+    public Texture2D cursorTexture;
     List<Unit> selectedUnits = new List<Unit>();
 
     [SerializeField] float speed = 5f;
@@ -42,6 +43,7 @@ public class CameraController : MonoBehaviour
 
     void Start()
     {
+        Cursor.SetCursor(cursorTexture, Vector2.zero, CursorMode.Auto);
         selectionBox = GetComponentInChildren<Image>(true).transform as RectTransform;
         cameraTransform = transform;
         selectionBox.gameObject.SetActive(false);
@@ -223,7 +225,7 @@ public class CameraController : MonoBehaviour
             object commandData = null;
             if (hit.collider is TerrainCollider)
             {
-                commandData = hit.point;
+                commandData = hit.point; 
             }
             else
             {
@@ -245,18 +247,12 @@ public class CameraController : MonoBehaviour
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit, Mathf.Infinity, commandLayerMask))
         {
-            
+            Unit u = hit.collider.gameObject.GetComponent<Unit>(); 
 
-            if (hit.collider.gameObject.tag == "Soldiers")
-            {
-              // Unit u = hit.collider.gameObject.GetComponent<Unit>();
-
-                if(hit.collider.gameObject.GetComponent<Unit>() == unit)
-                return true;
-            }
-
+            if (u)
+                if (u == unit)
+                    return true;
         }
         return false;
-
     }
 }

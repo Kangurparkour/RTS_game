@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class Warrior : Unit, ISelectable
 {
+    
     public void SetSelected(bool isSelected)
     {
         healthBar.gameObject.SetActive(isSelected);
@@ -17,7 +18,10 @@ public class Warrior : Unit, ISelectable
     }
     private void GetCommand(Enemy enemy)
     {
-        //todo
+        if(enemy)
+        {
+            target = enemy.transform;
+            task = Task.chase;
+        }
     }
-
 }
