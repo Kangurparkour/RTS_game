@@ -14,8 +14,8 @@ public class Unit : MonoBehaviour
     [SerializeField] float attackCooldown;
     [SerializeField] float timeToDestroyDeadUnit = 10f;
     protected enum Task { idle, move, chase, attack }
-    public static List<ISelectable> SelectableUnits { get { return selectableUnits; } }
-    static List<ISelectable> selectableUnits = new List<ISelectable>();
+    public static List<Unit> SelectableUnits { get { return selectableUnits; } }
+    static List<Unit> selectableUnits = new List<Unit>();
 
     protected Animator animator;
     protected NavMeshAgent agent;
@@ -41,19 +41,13 @@ public class Unit : MonoBehaviour
 
         if (this is ISelectable)
         {
-            selectableUnits.Add(this as ISelectable);
+            selectableUnits.Add(this);
             (this as ISelectable).SetSelected(false);
         }
 
     }
 
-    private void OnDestroy()
-    {
-        if (this is ISelectable) selectableUnits.Remove(this as ISelectable);
-    }
-
-
-    void Update()
+    protected virtual void Update()
     {
         if (IsAlive)
         {
@@ -69,14 +63,27 @@ public class Unit : MonoBehaviour
         {
             if ((timer -= Time.deltaTime) <= 5)
             {
-                var startPos = this.transform.position;
-                
-            }
-            if ((timer -= Time.deltaTime) <= 0)
+                agent.velocity = Vector3.zero;
                 Destroy(this.gameObject);
+            }
+
         }
 
         Animate();
+    }
+
+    protected virtual void OnTriggerEnter(Collider obj)
+    {
+
+    }
+    protected virtual void OnTriggerExit(Collider obj)
+    {
+
+    }
+
+    private void OnDestroy()
+    {
+        if (this is ISelectable) selectableUnits.Remove(this);
     }
 
     protected virtual void Idling()
@@ -89,7 +96,7 @@ public class Unit : MonoBehaviour
         {
             agent.velocity = Vector3.zero;
             transform.LookAt(target);
-            var distance = Vector3.Distance(agent.destination, transform.position);
+            var distance = Vector3.Distance(target.position, transform.position);
             if (distance <= attackDistance)
             {
                 if ((attackTimer -= Time.deltaTime) <= 0)
@@ -139,8 +146,18 @@ public class Unit : MonoBehaviour
 
     public virtual void Attack()
     {
-        animator.SetTrigger("Attack");
-        attackTimer = attackCooldown;
+        if (target)
+        {
+            Unit unit = target.GetComponent<Unit>();
+            if (unit && unit.IsAlive)
+            {
+                animator.SetTrigger("Attack");
+                attackTimer = attackCooldown;
+            }
+            else
+                target = null;
+        }
+
     }
 
     public virtual void DealDamage()
@@ -148,15 +165,33 @@ public class Unit : MonoBehaviour
         if (target)
         {
             Unit unit = target.GetComponent<Unit>();
-            if (unit && unit.IsAlive)
+            if (unit)
             {
-                unit.actualHp -= attackDamage;
-            }
-            else
-            {
-                target = null;
+                unit.ReciveDamage(attackDamage);
             }
         }
+    }
+
+    public virtual void ReciveDamage(float damage)
+    {
+        if (IsAlive)
+            actualHp -= damage;
+
+        if (!IsAlive)
+        {
+            agent.enabled = false;
+            foreach (var collider in GetComponents<Collider>())
+            {
+                collider.enabled = false;
+            }
+        }
+
+    }
+
+    protected virtual void OnDrawGizmosSelected()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, attackDistance);
     }
 
 }

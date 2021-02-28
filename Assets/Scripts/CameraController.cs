@@ -5,6 +5,8 @@ using UnityEngine.UI;
 
 public class CameraController : MonoBehaviour
 {
+    public static CameraController cameraController;
+
     Transform cameraTransform;
     public LayerMask groundMask = -1;
     public GameObject destiantionPoint;
@@ -43,6 +45,7 @@ public class CameraController : MonoBehaviour
 
     void Start()
     {
+        cameraController = this;
         Cursor.SetCursor(cursorTexture, Vector2.zero, CursorMode.Auto);
         selectionBox = GetComponentInChildren<Image>(true).transform as RectTransform;
         cameraTransform = transform;
@@ -156,7 +159,8 @@ public class CameraController : MonoBehaviour
             boxRect = AbsRect(selectionRect);
             selectionBox.anchoredPosition = boxRect.position;
             selectionBox.sizeDelta = boxRect.size;
-            UpdateSelcetedUnits();
+            if (boxRect.size.x != 0 || boxRect.size.y != 0)
+                UpdateSelcetedUnits();
 
         }
 
@@ -187,7 +191,7 @@ public class CameraController : MonoBehaviour
         selectedUnits.Clear();
         foreach (Unit unit in Unit.SelectableUnits)
         {
-            if (!unit)
+            if (!unit || !unit.IsAlive)
                 continue;
 
             var pos = unit.transform.position;
@@ -225,7 +229,7 @@ public class CameraController : MonoBehaviour
             object commandData = null;
             if (hit.collider is TerrainCollider)
             {
-                commandData = hit.point; 
+                commandData = hit.point;
             }
             else
             {
@@ -239,7 +243,9 @@ public class CameraController : MonoBehaviour
     private void GiveCommand(object command)
     {
         foreach (Unit unit in selectedUnits)
+        {
             unit.SendMessage("GetCommand", command, SendMessageOptions.DontRequireReceiver);
+        }
     }
     private bool IsMouseOnUnits(Unit unit)
     {
@@ -247,10 +253,10 @@ public class CameraController : MonoBehaviour
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit, Mathf.Infinity, commandLayerMask))
         {
-            Unit u = hit.collider.gameObject.GetComponent<Unit>(); 
+            Unit hitUnit = hit.collider.gameObject.GetComponent<Unit>();
 
-            if (u)
-                if (u == unit)
+            if (hitUnit != null)
+                if (hitUnit == unit)
                     return true;
         }
         return false;

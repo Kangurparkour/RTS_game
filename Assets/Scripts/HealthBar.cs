@@ -1,11 +1,10 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;  
+using UnityEngine.UI;
 
 public class HealthBar : MonoBehaviour
 {
-    Transform cameraTransorm;
     Slider hpSlider;
     Unit unit;
     [SerializeField] Vector3 sliderOffset;
@@ -16,16 +15,15 @@ public class HealthBar : MonoBehaviour
         hpSlider = GetComponent<Slider>();
         unit = GetComponentInParent<Unit>();
         var canvas = GameObject.FindGameObjectWithTag("HP Canvas");
-        if(canvas != null)
+        if (canvas != null)
         {
             transform.SetParent(canvas.transform);
         }
-        cameraTransorm = Camera.main.transform;
     }
 
     private void Update()
     {
-        if(!unit)
+        if (!unit)
         {
             Destroy(this.gameObject);
             return;
@@ -33,6 +31,6 @@ public class HealthBar : MonoBehaviour
 
         hpSlider.value = unit.Hp_Percent;
         transform.position = unit.transform.position + sliderOffset;
-        transform.LookAt(cameraTransorm);
+        transform.LookAt(Camera.main.transform);
     }
 }
