@@ -31,13 +31,18 @@ public class Unit : MonoBehaviour
     }
     public bool IsAlive { get { return actualHp > 0; } }
 
+    protected virtual void Awake()
+    {
+        agent = GetComponent<NavMeshAgent>();
+        animator = GetComponent<Animator>();
+        actualHp = MaxHp;
+        healthBar = Instantiate(hpSliderPrefab, transform).GetComponent<HealthBar>();
+
+    }
+
     protected virtual void Start()
     {
         timer = timeToDestroyDeadUnit;
-        actualHp = MaxHp;
-        animator = GetComponent<Animator>();
-        agent = GetComponent<NavMeshAgent>();
-        healthBar = Instantiate(hpSliderPrefab, transform).GetComponent<HealthBar>();
 
         if (this is ISelectable)
         {

@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class CameraController : MonoBehaviour
 {
-    public static CameraController cameraController;
+    static CameraController cameraController;
 
     Transform cameraTransform;
     public LayerMask groundMask = -1;
@@ -261,4 +261,10 @@ public class CameraController : MonoBehaviour
         }
         return false;
     }
+
+    public static void SpawnUnit(GameObject prefab)
+    {
+        cameraController.GiveCommand(prefab);
+    }
+
 }

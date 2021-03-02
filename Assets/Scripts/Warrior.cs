@@ -14,7 +14,7 @@ public class Warrior : Unit, ISelectable
     {
         agent.SetDestination(destination);
         task = Task.move;
-
+        Debug.Log(destination);
     }
     private void GetCommand(Enemy enemy)
     {
