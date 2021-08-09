@@ -42,14 +42,25 @@ public class CameraController : MonoBehaviour
     Vector2 mousePos;
     Vector2 ScreenPos;
     [SerializeField] LayerMask commandLayerMask = -1;
+    [SerializeField] LayerMask buildLayerMask = 0;
 
-    void Start()
+
+    GameObject BuildPrefab;
+    BuildingPlacer placer;
+
+    void Awake()
     {
         cameraController = this;
         Cursor.SetCursor(cursorTexture, Vector2.zero, CursorMode.Auto);
         selectionBox = GetComponentInChildren<Image>(true).transform as RectTransform;
         cameraTransform = transform;
         selectionBox.gameObject.SetActive(false);
+    }
+
+    private void Start()
+    {
+        placer = FindObjectOfType<BuildingPlacer>();
+        placer.gameObject.SetActive(false);
     }
 
 
@@ -59,6 +70,7 @@ public class CameraController : MonoBehaviour
         CameraRotation();
         LimitMap();
         SelecionBoxUpdate();
+        UpdatePlacer();
     }
 
     private void Controller()
@@ -148,6 +160,7 @@ public class CameraController : MonoBehaviour
         {
             selectionBox.gameObject.SetActive(true);
             selectionRect.position = mousePos;
+            TryBuild();
         }
         else if (Input.GetMouseButtonUp(0))
         {
@@ -167,6 +180,8 @@ public class CameraController : MonoBehaviour
         if (Input.GetMouseButtonDown(1))
         {
             GiveCommand();
+            BuildPrefab = null;
+            
         }
     }
 
@@ -213,10 +228,6 @@ public class CameraController : MonoBehaviour
         return point.x >= rect.position.x && point.x <= (rect.position.x + rect.size.x)
             && point.y >= rect.position.y && point.y <= (rect.position.y + rect.size.y);
     }
-
-
-
-
 
     private void GiveCommand()
     {
@@ -265,6 +276,38 @@ public class CameraController : MonoBehaviour
     public static void SpawnUnit(GameObject prefab)
     {
         cameraController.GiveCommand(prefab);
+    }
+
+    public static void SpawnBuild(GameObject prefab)
+    {
+        cameraController.BuildPrefab = prefab;
+    }
+
+    private void UpdatePlacer()
+    {
+        placer.gameObject.SetActive(BuildPrefab);
+        if (placer.gameObject.activeInHierarchy)
+        {
+            Ray ray = Camera.main.ViewportPointToRay(ScreenPos);
+            RaycastHit hit;
+            if (Physics.Raycast(ray, out hit, 1000, buildLayerMask))
+            {
+                placer.SetPosition(hit.point);
+            }
+
+
+        }
+    }
+
+    private void TryBuild()
+    {
+        if(BuildPrefab && placer && placer.isActiveAndEnabled && placer.CanBuildHere())
+        {
+            var buyable = BuildPrefab.GetComponent<Buyalbe>();
+            if (!buyable || !Gold.TrySpendResources(buyable.gold) || !Wood.TrySpendResources(buyable.woods)) return;
+
+            var unit = Instantiate(BuildPrefab, placer.transform.position, placer.transform.rotation);
+        }
     }
 
 }
